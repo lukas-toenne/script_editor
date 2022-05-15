@@ -24,6 +24,10 @@ import bpy
 from bpy.props import *
 
 
+status_items = bpy.types.ScriptCompiler.bl_rna.properties['status'].enum_items
+message_type_items = bpy.types.ScriptCompilerMessage.bl_rna.properties['type'].enum_items
+
+
 class  ScriptCompileOperator(bpy.types.Operator):
     """Compile script"""
     bl_idname = "script_editor.compile"
@@ -44,6 +48,19 @@ class  ScriptCompileOperator(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class ScriptCompilerMessageList(bpy.types.UIList):
+    bl_idname = "script_editor.message_list"
+
+    def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
+        compiler = data
+        message = item
+        if self.layout_type in {'DEFAULT', 'COMPACT'}:
+            layout.label(text="{},{}: {}".format(message.start_line, message.start_column, message.text), icon=message_type_items[message.type].icon)
+        elif self.layout_type == 'GRID':
+            layout.alignment = 'CENTER'
+            layout.label(text="", icon=message_type_items[message.type].icon)
+
+
 class ScriptEditorPanel:
     @classmethod
     def poll(cls, context):
@@ -60,19 +77,38 @@ class ScriptCompilePanel(bpy.types.Panel, ScriptEditorPanel):
     bl_category = "Text"
 
     def draw(self, context):
+        text = context.space_data.text
+        compiler = text.script_compiler
         layout = self.layout
-        layout.operator("script_editor.compile")
+
+        row = layout.row()
+        row.operator("script_editor.compile")
+        row2 = row.row()
+        row2.alignment = 'RIGHT'
+        row2.label(text=compiler.status, icon=status_items[compiler.status].icon)
+
+        row = layout.row()
+        row.label(text="{} Errors".format(compiler.num_errors), icon=message_type_items['ERROR'].icon)
+        row.label(text="{} Warnings".format(compiler.num_warnings), icon=message_type_items['WARNING'].icon)
+
+        layout.template_list("script_editor.message_list", "", compiler, "messages", compiler, "active_message")
+
+
 
 
 def register():
     bpy.types.Text.script_compiler = PointerProperty(type=bpy.types.ScriptCompiler)
+    bpy.types.ScriptCompiler.active_message = IntProperty(default=0)
 
     bpy.utils.register_class(ScriptCompileOperator)
+    bpy.utils.register_class(ScriptCompilerMessageList)
     bpy.utils.register_class(ScriptCompilePanel)
 
 
 def unregister():
     del bpy.types.Text.script_compiler
+    del bpy.types.ScriptCompiler.active_message
 
     bpy.utils.unregister_class(ScriptCompileOperator)
+    bpy.utils.unregister_class(ScriptCompilerMessageList)
     bpy.utils.unregister_class(ScriptCompilePanel)
