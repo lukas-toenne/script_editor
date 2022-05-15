@@ -94,11 +94,22 @@ class ScriptCompilePanel(bpy.types.Panel, ScriptEditorPanel):
         layout.template_list("script_editor.message_list", "", compiler, "messages", compiler, "active_message")
 
 
+def on_active_message_updated(self, context):
+    text = context.space_data.text
+    message = self.messages[self.active_message]
+    if message is not None:
+        # Subtract 1 because source location starts at 1, Blender text selection starts at 0.
+        text.select_set(
+            line_start=message.start_line - 1,
+            char_start=message.start_column - 1,
+            line_end=message.end_line - 1,
+            char_end=message.end_column - 1
+        )
 
 
 def register():
     bpy.types.Text.script_compiler = PointerProperty(type=bpy.types.ScriptCompiler)
-    bpy.types.ScriptCompiler.active_message = IntProperty(default=0)
+    bpy.types.ScriptCompiler.active_message = IntProperty(default=0, update=on_active_message_updated)
 
     bpy.utils.register_class(ScriptCompileOperator)
     bpy.utils.register_class(ScriptCompilerMessageList)
