@@ -122,7 +122,7 @@ class  ScriptDotImageOperator(bpy.types.Operator):
 
 
 class ScriptCompilerMessageList(bpy.types.UIList):
-    bl_idname = "script_editor.message_list"
+    bl_idname = "SCRIPT_EDITOR_UL_message_list"
 
     def draw_item(self, context, layout, data, item, icon, active_data, active_propname):
         compiler = data
@@ -168,7 +168,7 @@ class ScriptCompilePanel(bpy.types.Panel, ScriptEditorPanel):
         row.label(text="{} Errors".format(compiler.num_errors), icon=message_type_items['ERROR'].icon)
         row.label(text="{} Warnings".format(compiler.num_warnings), icon=message_type_items['WARNING'].icon)
 
-        layout.template_list("script_editor.message_list", "", compiler, "messages", compiler, "active_message")
+        layout.template_list("SCRIPT_EDITOR_UL_message_list", "", compiler, "messages", compiler, "active_message")
 
 
 def on_active_message_updated(self, context):
